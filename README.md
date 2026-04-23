@@ -1,5 +1,9 @@
 # stmemory — Structured Memory for LLM-Driven Development
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub stars](https://img.shields.io/github/stars/changmyoungkim/stmemory)](https://github.com/changmyoungkim/stmemory/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/changmyoungkim/stmemory)](https://github.com/changmyoungkim/stmemory/network)
+
 **Keyword → Plan Doc → Code File → Symbol** in 2 grep calls (~100 tokens).
 
 The biggest token waste in LLM-driven development is **finding where to make changes**. A single change request burns 2,000-5,000 tokens just on navigation. stmemory cuts that to ~100 tokens by maintaining a pre-compiled index.
