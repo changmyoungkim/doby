@@ -1,0 +1,63 @@
+{
+  "comment": "stmemory configuration template — copy to .stmemoryrc.json in your project root",
+
+  "scan_dirs": [
+    "src",
+    "lib",
+    "app",
+    "backend",
+    "frontend",
+    "scripts"
+  ],
+  "comment_scan_dirs": "List of directories to scan for code files. Paths are relative to project root.",
+
+  "file_extensions": [
+    ".py",
+    ".ts",
+    ".tsx",
+    ".js",
+    ".jsx",
+    ".go",
+    ".rs",
+    ".java",
+    ".rb",
+    ".swift"
+  ],
+  "comment_file_extensions": "List of file extensions to include. Only these files will be mapped to documentation.",
+
+  "plans_dir": ".omc/plans",
+  "comment_plans_dir": "Directory containing planning/architecture documentation (absolute or relative path)",
+
+  "wiki_dir": ".omc/wiki",
+  "comment_wiki_dir": "Directory containing wiki/memory documentation (absolute or relative path)",
+
+  "keyword_to_doc": {
+    "auth": "auth-system.md",
+    "user": "user-management.md",
+    "api": "api-design.md",
+    "database": "database-schema.md",
+    "payment": "payment-processing.md",
+    "logging": "logging-strategy.md",
+    "cache": "caching-layer.md",
+    "search": "search-implementation.md"
+  },
+  "comment_keyword_to_doc": "Keyword-to-doc mapping (Tier 3). If a file's path contains any of these keywords, it maps to the corresponding doc. Keywords are extracted from file paths (split by / and _). Matches are case-insensitive. Example: 'src/auth/login.ts' contains 'auth' → maps to 'auth-system.md'",
+
+  "directory_rules": {
+    "src/auth/": "auth-system.md",
+    "src/api/": "api-design.md",
+    "src/db/": "database-schema.md",
+    "backend/services/payment/": "payment-processing.md",
+    "frontend/hooks/": "frontend-patterns.md",
+    "frontend/components/": "component-library.md"
+  },
+  "comment_directory_rules": "Directory pattern-to-doc mapping (Tier 2). If a file path starts with any of these patterns, it maps to the corresponding doc. Use trailing /. Longest matching pattern wins. Example: 'src/auth/login.ts' starts with 'src/auth/' → maps to 'auth-system.md'",
+
+  "exact_file_map": {
+    "src/index.ts": "app-entry.md",
+    "src/main.py": "app-entry.md",
+    "backend/api/app.py": "api-design.md",
+    "frontend/app.tsx": "app-entry.md"
+  },
+  "comment_exact_file_map": "Exact file-to-doc mapping (Tier 1). Maps specific files to docs. Highest priority. Example: 'src/index.ts' → 'app-entry.md'"
+}
