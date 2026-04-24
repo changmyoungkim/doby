@@ -121,15 +121,25 @@ L4: Auto-Compile (LLM)        — 2,000 tokens  — manual trigger only
 **Trigger:** `/doby build` or `/doby`  
 **When:** First run, or indexes missing/outdated
 
-**Phase 1:** Python auto-mapping reads `.dobyrc.json` — 4-tier heuristic (exact → directory → keyword → fuzzy).
+**Phase 1:** Auto-generate spec docs from code (0 LLM tokens):
+```bash
+python ~/.claude/skills/doby/docgen.py --config .dobyrc.json --apply
+```
+Extracts FastAPI endpoints, Dart widgets, function signatures, imports via AST/regex. Generates one `.md` per domain. Skips domains that already have docs (use `--force` to overwrite).
 
-**Phase 2:** Opus verifies mappings, judges status (active/archived/orphan/planning), normalizes keywords.
+**Phase 2:** Auto-map code files to docs (0 LLM tokens):
+```bash
+python ~/.claude/skills/doby/automap.py --config .dobyrc.json --apply
+```
+4-tier heuristic (exact → directory → keyword → fuzzy) writes INDEX-codemap.md + INDEX.md.
 
-**Phase 3:** Haiku x2 parallel — extract keywords from docs, collect code symbols via LSP.
+**Phase 3:** Opus verifies mappings, judges status (active/archived/orphan/planning), normalizes keywords.
 
-**Phase 4:** Optional L3 RAG index via `python ~/.claude/skills/doby/rag.py index`
+**Phase 4:** Haiku x2 parallel — extract keywords from docs, collect code symbols via LSP.
 
-**Phase 5:** Opus updates all INDEX files.
+**Phase 5:** Optional L3 RAG index via `python ~/.claude/skills/doby/rag.py index`
+
+**Phase 6:** Opus updates all INDEX files.
 
 **INDEX.md format:** `@domain|plan_doc|code#symbol;code#symbol|status`  
 **INDEX-keywords.md format:** `keyword:doc1.md,doc2.md`  
