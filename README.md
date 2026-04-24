@@ -30,30 +30,16 @@ Done. 2 grep calls. Domain, plan doc, code files, symbols, status — all in one
 
 **The core differentiator.** When any code modification is requested:
 
-```
-Phase 0: doby resolve
-  └─ Auto-find related docs + code via grep
-
-Phase 1-2: Read Spec → Update Spec
-  └─ Read existing spec doc, update it first, get user approval
-
-Phase 3: Plan Verification Loop
-  └─ Feasibility check, architecture review, risk assessment
-  └─ Repeats until consensus (Opus + Haiku agents)
-
-Phase 4: Implementation via Parallel Haiku Agents
-  └─ Code generation in parallel
-  └─ Opus verifies: spec-code consistency, quality, conventions
-  └─ Repeats until consensus
-
-Phase 5: Integration Test
-  └─ Run test suite, verify no regressions
-
-Phase 6: doby sync + Consistency Check
-  └─ Update INDEX, verify all links still valid
-
-Phase 7: Complete
-  └─ Report: what changed, why, impact
+```mermaid
+flowchart TD
+    A["Phase 0: doby resolve\n🔍 grep 2 calls → docs + code"] --> B["Phase 1-2: Spec Review → Update\n📄 Update spec first, user approval"]
+    B --> C{"Phase 3: Plan Verification\n♻️ Feasibility · Architecture · Risk"}
+    C -->|"❌ Issues found"| C
+    C -->|"✅ Consensus"| D{"Phase 4: Implementation\n⚡ Parallel Haiku Agents\nOpus verifies consistency"}
+    D -->|"❌ Issues found"| D
+    D -->|"✅ Consensus"| E["Phase 5: Integration Test\n🧪 Run tests, verify"]
+    E --> F["Phase 6: doby sync\n🔄 Update INDEX + consistency check"]
+    F --> G["Phase 7: Complete\n✅ Report + log"]
 ```
 
 **Time saved:** Navigation (2,000-5,000 tokens) + rework cycles (typically 2-4 rounds) = **90-95% token reduction on code changes**.
