@@ -30,17 +30,17 @@ STOPWORDS: set[str] = {
 
 def normalize_doc_name(doc_name: str) -> str:
     """
-    Normalize doc name by removing .md extension if present.
+    Normalize doc name by removing .md extension and @ prefix if present.
 
     Args:
-        doc_name: Doc name (e.g., "auth-system.md" or "auth-system")
+        doc_name: Doc name (e.g., "@auth", "auth-system.md", or "auth-system")
 
     Returns:
-        Doc name without .md extension
+        Doc name without .md extension or @ prefix
     """
     if doc_name.endswith(".md"):
-        return doc_name[:-3]
-    return doc_name
+        doc_name = doc_name[:-3]
+    return doc_name.lstrip("@")
 
 
 def load_config(config_path: str) -> Dict:
