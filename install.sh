@@ -62,27 +62,51 @@ else
 fi
 echo ""
 
-# Print hook installation instructions
-echo "╔════════════════════════════════════════════════════════════════╗"
-echo "║                  NEXT STEPS: Add Hooks                        ║"
-echo "╚════════════════════════════════════════════════════════════════╝"
-echo ""
-echo "Add the following to ~/.claude/settings.local.json:"
-echo ""
-echo '  "hooks": {'
-echo '    "PostToolUse": [{'
-echo '      "matcher": "Write|Edit",'
-echo '      "hooks": [{"type": "command", "command": "node ~/.claude/skills/doby/detect-change.mjs"}]'
-echo '    }],'
-echo '    "Stop": [{'
-echo '      "matcher": "",'
-echo '      "hooks": [{"type": "command", "command": "node ~/.claude/skills/doby/batch-report.mjs"}]'
-echo '    }]'
-echo '  }'
-echo ""
-echo "These hooks will:"
-echo "  - Detect changes after Write/Edit operations (PostToolUse)"
-echo "  - Generate a batch report when the session ends (Stop)"
+# Auto-install hooks into ~/.claude/settings.local.json
+SETTINGS_FILE="$HOME/.claude/settings.local.json"
+
+install_hooks() {
+  local doby_hooks='{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ~/.claude/skills/doby/detect-change.mjs"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ~/.claude/skills/doby/batch-report.mjs"
+          }
+        ]
+      }
+    ]
+  }
+}'
+
+  if [ ! -f "$SETTINGS_FILE" ] || [ "$(cat "$SETTINGS_FILE" 2>/dev/null)" = "{}" ]; then
+    echo "$doby_hooks" > "$SETTINGS_FILE"
+    echo "✓ Hooks installed to $SETTINGS_FILE"
+  elif grep -q "detect-change.mjs" "$SETTINGS_FILE" 2>/dev/null; then
+    echo "✓ Doby hooks already installed in $SETTINGS_FILE"
+  else
+    echo "⚠ $SETTINGS_FILE already has content. Please merge doby hooks manually:"
+    echo ""
+    echo '  PostToolUse: node ~/.claude/skills/doby/detect-change.mjs (matcher: Write|Edit)'
+    echo '  Stop: node ~/.claude/skills/doby/batch-report.mjs'
+  fi
+}
+
+install_hooks
 echo ""
 
 echo "╔════════════════════════════════════════════════════════════════╗"
