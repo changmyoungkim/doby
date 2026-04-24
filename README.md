@@ -118,11 +118,12 @@ bash ~/.claude/skills/doby/install.sh
 /doby build
 ```
 
-1. **Phase 1**: Python automapper scans codebase, applies 4-tier matching (0 LLM tokens)
-2. **Phase 2**: LLM verifies mappings, classifies status (active/archived/orphan/planning)
-3. **Phase 3**: Keyword extraction + symbol collection (parallel agents)
-4. **Phase 4**: Optional ChromaDB RAG indexing
-5. **Phase 5**: Write all 4 INDEX files, log, report
+1. **Phase 1**: `docgen.py` — Auto-generate spec docs from code via AST/regex (0 LLM tokens)
+2. **Phase 2**: `automap.py` — Map code files to docs via 4-tier heuristic (0 LLM tokens)
+3. **Phase 3**: LLM verifies mappings, classifies status (active/archived/orphan/planning)
+4. **Phase 4**: Keyword extraction + symbol collection (parallel agents)
+5. **Phase 5**: Optional ChromaDB RAG indexing
+6. **Phase 6**: Write all 4 INDEX files, log, report
 
 ### `resolve` — Keyword Search
 
@@ -275,7 +276,7 @@ python ~/.claude/skills/doby/rag.py rebuild
 |-----------|------|--------|
 | `resolve` (search) | ~100 tokens | grep 2 calls, 0 file reads |
 | `update` (incremental) | ~300 tokens | grep -n + line edit |
-| `build` (full, once) | ~5,000-10,000 | Python heuristics + LLM verify |
+| `build` (full, once) | ~5,000-10,000 | docgen (0) + automap (0) + LLM verify |
 | `lint` (health check) | ~1,000-2,000 | Parallel collect + judge |
 | `compile` (wiki page) | ~2,000 | Manual trigger only |
 | `status` (quick snapshot) | ~50 tokens | Grep only, no file reads |
@@ -303,6 +304,7 @@ python ~/.claude/skills/doby/rag.py rebuild
 ├── SKILL.md                  Skill definition (modes, rules, format)
 ├── README.md                 This file
 ├── COMPARISON.md             15-tool competitive analysis
+├── docgen.py                 Zero-token spec doc generator (AST/regex)
 ├── automap.py                Python automapper (4-tier heuristic)
 ├── rag.py                    ChromaDB semantic search (L3)
 ├── detect-change.mjs         PostToolUse hook (change tracking)
