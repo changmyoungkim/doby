@@ -1,4 +1,4 @@
-# stmemory — Structured Memory for LLM-Driven Development
+# doby — Structured Memory for LLM-Driven Development
 
 ## The Problem
 
@@ -71,7 +71,7 @@ Updates use grep -n to find the line number, then Edit that line only. **No Read
 
 | # | Tool | By | Approach |
 |---|------|-----|----------|
-| 1 | **stmemory** | Custom | Flat-line index + grep + plan↔code mapping |
+| 1 | **doby** | Custom | Flat-line index + grep + plan↔code mapping |
 | 2 | **LLM Wiki** | Karpathy pattern | Semantic wiki graph, Compile Once |
 | 3 | **Cursor .cursorrules** | Cursor IDE | Modular .mdc rule files |
 | 4 | **Cline Memory Bank** | Cline | Hierarchical markdown knowledge bank |
@@ -93,7 +93,7 @@ Updates use grep -n to find the line number, then Edit that line only. **No Read
 
 | Tool | Method | Query Cost | Accuracy |
 |------|--------|-----------|----------|
-| **stmemory** | grep 1-2 calls (flat-line index) | ~100 tokens | Curated → very high |
+| **doby** | grep 1-2 calls (flat-line index) | ~100 tokens | Curated → very high |
 | **LLM Wiki** | Wiki page Read | ~500-1,000 tokens | Semantic → high |
 | **Aider repo-map** | PageRank file ranking | ~1,000 tokens (budget) | Dependency-based → high |
 | **Greptile** | AST docstring embeddings | API call cost | Semantic+structural → very high |
@@ -102,26 +102,26 @@ Updates use grep -n to find the line number, then Edit that line only. **No Read
 | **SWE-agent** | find_file/search_file commands | ~300 tokens | Summary output → medium |
 | **Repomix** | Full repo packing | 70% compressed but still large | All-inclusive → low (noise) |
 
-**stmemory advantage**: The only tool with a **Read 0 principle**. All other tools require at least one file read or API call. stmemory's grep output contains domain/doc/code/symbol/status in a single line.
+**doby advantage**: The only tool with a **Read 0 principle**. All other tools require at least one file read or API call. doby's grep output contains domain/doc/code/symbol/status in a single line.
 
 ### Dimension 2: Plan ↔ Code Mapping
 
 | Tool | Plan Integration | Bidirectional | Auto-sync |
 |------|-----------------|---------------|-----------|
-| **stmemory** | ★★★★★ Core feature | ✅ Code→doc, doc→code | Hook-based pending tracking |
+| **doby** | ★★★★★ Core feature | ✅ Code→doc, doc→code | Hook-based pending tracking |
 | **LLM Wiki** | ★★★★ Decision records | One-way (wiki→code) | LLM-based (token cost) |
 | **Cline Memory Bank** | ★★★★ productContext.md | One-way (doc→code) | Manual |
 | **Copilot Workspace** | ★★★★★ Spec→Plan→Code | One-way (plan→code) | One-shot (per session) |
 | **Aider repo-map** | ★★ File ranking only | None | Static snapshot |
 | **Greptile** | ★★★ NL query | One-way (query→code) | Auto-indexing |
 
-**stmemory advantage**: The only tool supporting **bidirectional mapping**. INDEX-codemap.md enables code→doc reverse lookup in 1 grep call.
+**doby advantage**: The only tool supporting **bidirectional mapping**. INDEX-codemap.md enables code→doc reverse lookup in 1 grep call.
 
 ### Dimension 3: Token Efficiency
 
 | Tool | Build Cost | Query Cost | Update Cost | Change Tracking |
 |------|-----------|-----------|-------------|----------------|
-| **stmemory** | 5K-10K (once) | **100-200** | 300-500 | **0** (hook) |
+| **doby** | 5K-10K (once) | **100-200** | 300-500 | **0** (hook) |
 | **LLM Wiki** | 10K-50K (once) | 500-1,000 | 5K-10K | LLM-based (cost) |
 | **Cline Memory Bank** | Manual | 500-2,000 | Manual | Manual |
 | **Aider repo-map** | tree-sitter parse | 1,000 (budget) | Re-parse | None |
@@ -130,16 +130,16 @@ Updates use grep -n to find the line number, then Edit that line only. **No Read
 
 **Per-session savings** (5-10 change requests):
 - Legacy grep/Serena: 10,000-50,000 tokens
-- stmemory: 500-2,000 tokens
+- doby: 500-2,000 tokens
 - **90-95% token reduction**
 
-**stmemory advantage**: Change tracking cost is **exactly 0**. The PostToolUse hook appends file paths to a .txt file via shell script — zero LLM token consumption.
+**doby advantage**: Change tracking cost is **exactly 0**. The PostToolUse hook appends file paths to a .txt file via shell script — zero LLM token consumption.
 
 ### Dimension 4: Infrastructure
 
 | Tool | Requirements | Cost | Portability |
 |------|-------------|------|-------------|
-| **stmemory** | 4 markdown files + grep + optional chromadb | Free | ★★★★★ Anywhere |
+| **doby** | 4 markdown files + grep + optional chromadb | Free | ★★★★★ Anywhere |
 | **LLM Wiki** | Markdown + optional Obsidian | Free | ★★★★ |
 | **Aider repo-map** | Python CLI + tree-sitter | Free | ★★★★ |
 | **Cursor .cursorrules** | Cursor IDE | $20/mo | ★★ Cursor only |
@@ -151,7 +151,7 @@ Updates use grep -n to find the line number, then Edit that line only. **No Read
 
 | Tool | Small (<100 files) | Medium (100-1K) | Large (1K+) |
 |------|-------------------|-----------------|-------------|
-| **stmemory** | ★★★★★ | ★★★★ | ★★★ (manual upkeep) |
+| **doby** | ★★★★★ | ★★★★ | ★★★ (manual upkeep) |
 | **Aider repo-map** | ★★★★ | ★★★★★ | ★★★★ (PageRank auto) |
 | **Greptile** | ★★★ (overkill) | ★★★★★ | ★★★★★ |
 | **Augment Code** | ★★★ (overkill) | ★★★★★ | ★★★★★ (100M+ LOC) |
@@ -160,7 +160,7 @@ Updates use grep -n to find the line number, then Edit that line only. **No Read
 
 ### Overall Rating Matrix
 
-| Dimension | stmemory | LLM Wiki | Aider | Greptile | Augment | Devin |
+| Dimension | doby | LLM Wiki | Aider | Greptile | Augment | Devin |
 |-----------|----------|----------|-------|----------|---------|-------|
 | Query token efficiency | ★★★★★ | ★★★ | ★★★ | ★★★★ | ★★★★ | ★★★★ |
 | Plan↔code mapping | ★★★★★ | ★★★★ | ★★ | ★★★ | ★★★ | ★★★★ |
@@ -173,9 +173,9 @@ Updates use grep -n to find the line number, then Edit that line only. **No Read
 
 ---
 
-### stmemory vs LLM Wiki: Deep Comparison
+### doby vs LLM Wiki: Deep Comparison
 
-| Aspect | stmemory | LLM Wiki |
+| Aspect | doby | LLM Wiki |
 |--------|----------|----------|
 | Philosophy | "Where is it?" — instant navigation | "What is it?" — deep explanation |
 | Analogy | Library index card | Encyclopedia |
@@ -187,15 +187,15 @@ Updates use grep -n to find the line number, then Edit that line only. **No Read
 | Semantic richness | ❌ Structured metadata only | ✅ Natural language context |
 | Auto-generation | ✅ Python heuristics (0 tokens) | ✅ LLM compilation (high tokens) |
 
-**With 4-layer architecture, stmemory absorbs LLM Wiki's strengths:**
+**With 4-layer architecture, doby absorbs LLM Wiki's strengths:**
 - L2 (Wiki pages) covers semantic richness and design decisions
 - L3 (RAG) covers semantic search / natural language queries
 - L4 (Auto-compile) covers wiki generation
-- L1 (grep index) preserves stmemory's core advantage: 100-token navigation
+- L1 (grep index) preserves doby's core advantage: 100-token navigation
 
 ---
 
-### When stmemory Is Optimal
+### When doby Is Optimal
 
 1. **Small-to-medium projects** (100-500 files) with plan docs
 2. **Token-constrained budgets** — minimize per-query API cost
@@ -203,10 +203,10 @@ Updates use grep -n to find the line number, then Edit that line only. **No Read
 4. **Infrastructure constraints** — no external services or paid IDEs
 5. **Transparency required** — fully understand and control the index
 
-### When stmemory Falls Short
+### When doby Falls Short
 
 1. **Large monorepos** (10K+ files) — Greptile/Augment auto-indexing wins
-2. **No plan docs** — stmemory's core value disappears
+2. **No plan docs** — doby's core value disappears
 3. **Fully autonomous coding** — Devin/SWE-agent are better suited
 4. **Multi-language repos** — Aider's 130+ language tree-sitter support wins
 
@@ -216,15 +216,15 @@ Updates use grep -n to find the line number, then Edit that line only. **No Read
 
 ```bash
 # Install
-git clone https://github.com/yourname/stmemory ~/.claude/skills/stmemory
+git clone https://github.com/yourname/doby ~/.claude/skills/doby
 
 # Setup in your project
 cd your-project
-bash ~/.claude/skills/stmemory/install.sh
+bash ~/.claude/skills/doby/install.sh
 
-# Edit .stmemoryrc.json with your project's mappings
+# Edit .dobyrc.json with your project's mappings
 # Then build the index
-# /stmemory build
+# /doby build
 ```
 
 ## Layer Details
@@ -245,16 +245,16 @@ Activates only when L1 grep returns no results.
 
 ```bash
 # Index
-python ~/.claude/skills/stmemory/rag.py index
+python ~/.claude/skills/doby/rag.py index
 
 # Query
-python ~/.claude/skills/stmemory/rag.py query "recommend places near user"
+python ~/.claude/skills/doby/rag.py query "recommend places near user"
 ```
 
 ### L4: Auto-Compile
 
 LLM generates wiki pages from plan docs + code.
-Manual trigger only: `/stmemory compile <topic>`.
+Manual trigger only: `/doby compile <topic>`.
 
 ## Design Philosophy
 
