@@ -1,5 +1,9 @@
 # doby — Spec-First Code Modification for LLM-Driven Development
 
+<p align="center">
+  <img src="doby.png" alt="Doby — Your loyal code elf" width="600">
+</p>
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub stars](https://img.shields.io/github/stars/changmyoungkim/doby)](https://github.com/changmyoungkim/doby/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/changmyoungkim/doby)](https://github.com/changmyoungkim/doby/network)
