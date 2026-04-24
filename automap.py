@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-stmemory generic automapper — maps codebase files to documentation.
+doby generic automapper — maps codebase files to documentation.
 
-Reads config from .stmemoryrc.json in project root (or --config flag).
+Reads config from .dobyrc.json in project root (or --config flag).
 Uses 4-tier matching: exact_file_map → directory_rules → keyword_to_doc → fuzzy match.
-Outputs markdown files linking code to docs: INDEX-codemap.md, INDEX.md.
+Outputs flat-line INDEX files linking code to docs: INDEX-codemap.md, INDEX.md.
 
 Usage:
-  python automap.py [--config .stmemoryrc.json] [--dry-run] [--apply]
+  python automap.py [--config .dobyrc.json] [--dry-run] [--apply]
   python automap.py --help
 """
 
@@ -45,10 +45,10 @@ def normalize_doc_name(doc_name: str) -> str:
 
 def load_config(config_path: str) -> Dict:
     """
-    Load stmemory configuration from JSON file.
+    Load doby configuration from JSON file.
 
     Args:
-        config_path: Path to .stmemoryrc.json
+        config_path: Path to .dobyrc.json
 
     Returns:
         Configuration dictionary with required keys:
@@ -68,8 +68,8 @@ def load_config(config_path: str) -> Dict:
     if not os.path.exists(config_path):
         raise FileNotFoundError(
             f"Config file not found: {config_path}\n\n"
-            "Create .stmemoryrc.json in your project root with this template:\n"
-            "  https://example.com/.stmemoryrc.example.json\n\n"
+            "Create .dobyrc.json in your project root with this template:\n"
+            "  https://example.com/.dobyrc.example.json\n\n"
             "Required keys: scan_dirs, file_extensions, keyword_to_doc, "
             "directory_rules, exact_file_map, plans_dir, wiki_dir"
         )
@@ -85,7 +85,7 @@ def load_config(config_path: str) -> Dict:
     if missing:
         raise ValueError(
             f"Config is missing required keys: {missing}\n"
-            f"See .stmemoryrc.example.json for template"
+            f"See .dobyrc.example.json for template"
         )
 
     # Normalize doc names: remove .md extension if present
@@ -321,100 +321,69 @@ def render_index_codemap(codemap: Dict[str, Optional[str]]) -> str:
     """
     Render INDEX-codemap.md from code-to-doc mapping.
 
-    Format: | filepath | → | documentation |
+    Format: filepath:doc_name (flat-line, pipe-separated, no symbols)
 
     Args:
         codemap: Dictionary mapping filepath → doc name
 
     Returns:
-        Markdown content for INDEX-codemap.md
+        Flat-line content for INDEX-codemap.md
     """
-    lines = [
-        "# INDEX-codemap: Code → Documentation",
-        "",
-        "Maps source files to documentation files.",
-        "",
-        "| File | Documentation |",
-        "|------|---|",
-    ]
+    lines = []
 
     for filepath, doc in sorted(codemap.items()):
         if doc:
-            lines.append(f"| `{filepath}` | [{doc}](.omc/plans/{doc}.md) |")
-        else:
-            lines.append(f"| `{filepath}` | (no doc) |")
+            lines.append(f"{filepath}:{doc}.md")
 
-    return "\n".join(lines) + "\n"
+    return "\n".join(lines) + "\n" if lines else ""
 
 
 def render_index(codemap: Dict[str, Optional[str]], available_docs: List[str]) -> str:
     """
     Render INDEX.md from code-to-doc mapping and doc list.
 
-    Format:
-    ## [doc-name]
-    - filepath1
-    - filepath2
+    Format: @doc_name|doc_name.md|filepath1;filepath2|active (flat-line, one doc per line)
 
     Args:
         codemap: Dictionary mapping filepath → doc name
         available_docs: List of available docs
 
     Returns:
-        Markdown content for INDEX.md
+        Flat-line content for INDEX.md
     """
-    lines = [
-        "# INDEX: Documentation → Code",
-        "",
-        "Maps documentation files to source files.",
-        "",
-    ]
+    lines = []
 
     # Group files by doc
     doc_to_files: Dict[str, List[str]] = {doc: [] for doc in available_docs}
-    unmapped: List[str] = []
 
     for filepath, doc in codemap.items():
         if doc:
             if doc not in doc_to_files:
                 doc_to_files[doc] = []
             doc_to_files[doc].append(filepath)
-        else:
-            unmapped.append(filepath)
 
-    # Render each doc with its files
+    # Render each doc with its files (flat-line format)
     for doc in sorted(available_docs):
         files = doc_to_files.get(doc, [])
         if files:
-            lines.append(f"## [{doc}](.omc/plans/{doc}.md)")
-            lines.append("")
-            for filepath in sorted(files):
-                lines.append(f"- `{filepath}`")
-            lines.append("")
+            file_list = ";".join(sorted(files))
+            lines.append(f"@{doc}|{doc}.md|{file_list}|active")
 
-    # Unmapped files section
-    if unmapped:
-        lines.append("## (Unmapped)")
-        lines.append("")
-        for filepath in sorted(unmapped):
-            lines.append(f"- `{filepath}`")
-        lines.append("")
-
-    return "\n".join(lines) + "\n"
+    return "\n".join(lines) + "\n" if lines else ""
 
 
 def main() -> None:
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="stmemory automapper: map codebase files to documentation",
+        description="doby automapper: map codebase files to documentation",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
   python automap.py --dry-run
-  python automap.py --config /path/to/.stmemoryrc.json --apply
+  python automap.py --config /path/to/.dobyrc.json --apply
   python automap.py --help
 
-Config file (.stmemoryrc.json) required in project root with:
+Config file (.dobyrc.json) required in project root with:
   - scan_dirs: list of directories to scan
   - file_extensions: list of file extensions (e.g., [".py", ".ts"])
   - keyword_to_doc: mapping of keywords to docs
@@ -426,8 +395,8 @@ Config file (.stmemoryrc.json) required in project root with:
     )
     parser.add_argument(
         "--config",
-        default=".stmemoryrc.json",
-        help="Path to config file (default: .stmemoryrc.json)"
+        default=".dobyrc.json",
+        help="Path to config file (default: .dobyrc.json)"
     )
     parser.add_argument(
         "--dry-run",
@@ -480,13 +449,18 @@ Config file (.stmemoryrc.json) required in project root with:
         print(index_content[:500] + "..." if len(index_content) > 500 else index_content)
         print("\nRun with --apply to write changes")
     elif args.apply:
-        with open("INDEX-codemap.md", "w", encoding="utf-8") as f:
-            f.write(codemap_content)
-        print("Wrote INDEX-codemap.md")
+        plans_dir = config.get("plans_dir", ".omc/plans")
+        Path(plans_dir).mkdir(parents=True, exist_ok=True)
 
-        with open("INDEX.md", "w", encoding="utf-8") as f:
+        codemap_path = Path(plans_dir) / "INDEX-codemap.md"
+        with open(codemap_path, "w", encoding="utf-8") as f:
+            f.write(codemap_content)
+        print(f"Wrote {codemap_path}")
+
+        index_path = Path(plans_dir) / "INDEX.md"
+        with open(index_path, "w", encoding="utf-8") as f:
             f.write(index_content)
-        print("Wrote INDEX.md")
+        print(f"Wrote {index_path}")
     else:
         print(codemap_content)
 

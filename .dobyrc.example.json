@@ -1,5 +1,5 @@
 {
-  "comment": "stmemory configuration template — copy to .stmemoryrc.json in your project root",
+  "comment": "doby configuration template — copy to .dobyrc.json in your project root",
 
   "scan_dirs": [
     "src",

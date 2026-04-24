@@ -1,22 +1,84 @@
 ---
-name: stmemory
-description: Build and query structured plan↔code indexes. Keyword → plan doc → code file → symbol in grep 1-2 calls.
+name: doby
+description: Structured plan-code index + spec-first fix workflow. Keyword to plan doc to code file to symbol in grep 1-2 calls.
 user-invocable: true
 triggers:
-  - /stmemory
-  - stmemory
+  - /doby
+  - doby
+  - /fix
+  - fix
   - structured index
   - plan index
-argument-hint: "[build|resolve <keyword>|lint|update|compile]"
+  - 수정
+  - 고쳐
+  - 고치자
+  - 바꿔
+  - 바꾸자
+  - 변경
+  - 업데이트
+  - 추가해
+  - 추가하자
+  - 만들어
+  - 만들자
+  - 구현해
+  - 구현하자
+  - 개선해
+  - 개선하자
+  - 해줘
+  - 해주세요
+  - 하자
+  - 적용해
+  - 적용하자
+  - 반영해
+  - 반영하자
+  - 넣어
+  - 넣자
+  - 빼줘
+  - 빼자
+  - 삭제해
+  - 삭제하자
+  - 제거해
+  - 제거하자
+  - 옮겨
+  - 옮기자
+  - 리팩토링
+  - 리팩터
+  - 분리해
+  - 분리하자
+  - 합쳐
+  - 합치자
+  - 연결해
+  - 연동해
+  - 교체해
+  - 대체해
+  - 개발해
+  - 개발하자
+  - 작업해
+  - 작업하자
+  - implement
+  - add
+  - remove
+  - delete
+  - update
+  - change
+  - modify
+  - refactor
+  - replace
+  - integrate
+  - connect
+  - build
+  - create
+  - develop
+argument-hint: "[build|resolve <keyword>|lint|update|compile|fix|status]"
 scope: user
 ---
 
-# /stmemory — Structured Memory for LLM-Driven Development
+# Doby — Structured Memory + Spec-First Fix Workflow
 
 ## Purpose
 
 Build and maintain a **keyword → plan doc → code file → symbol** 4-level mapping.
-Applies the LLM Wiki "Compile Once, Query Many" pattern — reach any file via grep, never re-explore.
+"Compile Once, Query Many" — reach any file via grep, never re-explore.
 
 ## Architecture: 4 Layers
 
@@ -41,8 +103,8 @@ L4: Auto-Compile (LLM)        — 2,000 tokens  — manual trigger only
 .omc/wiki/                ← L2 wiki pages (design decisions, context)
 
 .omc/state/
-├── stmemory-pending.txt  ← Zero-cost change tracking
-└── stmemory-rag/         ← L3 ChromaDB storage
+├── doby-pending.txt      ← Zero-cost change tracking
+└── doby-rag/             ← L3 ChromaDB storage
 ```
 
 ## Model Routing
@@ -51,238 +113,173 @@ L4: Auto-Compile (LLM)        — 2,000 tokens  — manual trigger only
 |------|-------|------|
 | Supervise / classify / judge | **Opus** (direct) | Domain classification, status judgment, quality check |
 | Collect / scan / extract | **Haiku** (Agent) | Doc scan, keyword extraction, code path verification |
-| Forbidden | ~~Sonnet~~ | Not used |
 
-## 5 Modes
-
----
+## 7 Modes
 
 ### Mode 1: `build` (Full Build)
 
-**Trigger:** `/stmemory build` or `/stmemory`
-**When:** First run, or indexes are missing/outdated
+**Trigger:** `/doby build` or `/doby`  
+**When:** First run, or indexes missing/outdated
 
-#### Phase 1: Python Auto-mapping (0 LLM tokens)
+**Phase 1:** Python auto-mapping reads `.dobyrc.json` — 4-tier heuristic (exact → directory → keyword → fuzzy).
 
-```bash
-python ~/.claude/skills/stmemory/automap.py --apply
-```
+**Phase 2:** Opus verifies mappings, judges status (active/archived/orphan/planning), normalizes keywords.
 
-Reads `.stmemoryrc.json` from project root for project-specific config:
-- 4-tier heuristic matching: exact_file_map → directory_rules → keyword_to_doc → fuzzy match
-- `--apply` updates INDEX-codemap.md + INDEX.md
-- `--dry-run` for preview only
+**Phase 3:** Haiku x2 parallel — extract keywords from docs, collect code symbols via LSP.
 
-#### Phase 2: Domain Classification + Status (Opus direct)
+**Phase 4:** Optional L3 RAG index via `python ~/.claude/skills/doby/rag.py index`
 
-```
-Opus verifies Python output:
-  - Check mapping accuracy (fix incorrect matches)
-  - Judge each doc status: active / archived / orphan / planning
-  - Normalize keywords (merge synonyms)
-  - Add unmatched files to exact_file_map in .stmemoryrc.json
-```
+**Phase 5:** Opus updates all INDEX files.
 
-#### Phase 3: Keyword Index Enhancement (Haiku ×2 parallel, if needed)
+**INDEX.md format:** `@domain|plan_doc|code#symbol;code#symbol|status`  
+**INDEX-keywords.md format:** `keyword:doc1.md,doc2.md`  
+**INDEX-codemap.md format:** `src/file.ts:doc.md#symbol1,symbol2`  
+**INDEX-log.md format:** `2026-04-23T12:00 build 50docs 20active 15archived 10orphan 5planning`
 
-```
-Agent(model="haiku", run_in_background=true) × 2:
-  - Agent A: Extract keywords from newly added docs → update INDEX-keywords.md
-  - Agent B: Collect code symbols (LSP document_symbols) → enhance INDEX-codemap.md
-```
-
-#### Phase 4: L3 RAG Index (optional)
-
-```bash
-python ~/.claude/skills/stmemory/rag.py index
-```
-
-Indexes plan docs + code files into ChromaDB for semantic fallback search.
-
-#### Phase 5: Verify + Log (Opus direct)
-
-Update all 4 INDEX files. **All INDEX files use flat-line format** — 1 line = 1 record, reachable by grep -n.
-
-**INDEX.md** — Master record (1 line = 1 doc):
-```
-Format: @domain|plan_doc|code#symbol;code#symbol|status
-```
-```
-@audio|audio-playback.md|src/hooks/useAudio.ts#useAudio,play;api/audio.py#get_audio|active
-@auth|auth-system.md|src/pages/login.tsx;api/auth.py#login,refresh|active
-@feature|feature-spec.md||planning
-```
-
-**INDEX-keywords.md** — Keyword → doc (1 line = 1 keyword):
-```
-audio:audio-playback.md,tts-config.md
-auth:auth-system.md
-playback:audio-playback.md
-```
-
-**INDEX-codemap.md** — Code → doc reverse map (1 line = 1 code file):
-```
-src/hooks/useAudio.ts:audio-playback.md#useAudio,play
-api/auth.py:auth-system.md#login,refresh
-```
-
-**INDEX-log.md** — Change history (append-only):
-```
-2026-04-23T12:00 build 50docs 20active 15archived 10orphan 5planning
-```
-
-Report:
-```
-Distribution: Haiku {N} / Opus direct {M}
-Result: active {A} / archived {B} / orphan {C} / planning {D}
-Gap: {N} code files without plan docs
-```
+**Report:** Distribution of Haiku/Opus work, active/archived/orphan/planning counts, code coverage gaps.
 
 ---
 
 ### Mode 2: `resolve` (Keyword Search)
 
-**Trigger:** `/stmemory <keyword>` or auto-called from other skills
-**Model:** Opus direct (grep 1-2 calls, no Agent needed)
-**0 Read calls.** Never open INDEX files. grep output only.
+**Trigger:** `/doby <keyword>` or auto-called from Mode 6 (fix)  
+**Model:** Opus direct (grep only, ~100 tokens)
 
-```
+```bash
 Step 1: grep "keyword" .omc/plans/INDEX-keywords.md
-  → "audio:audio-playback.md,tts-config.md"
-
-Step 2: grep "audio-playback.md" .omc/plans/INDEX.md
-  → "@audio|audio-playback.md|src/hooks/useAudio.ts#useAudio,play|active"
-
-Total cost: grep 2 calls = ~100 tokens
+Step 2: grep "^@domain" .omc/plans/INDEX.md
+Step 3 (optional): grep "filename" .omc/plans/INDEX-codemap.md
 ```
 
-**Reverse (code → doc):**
-```
-grep "useAudio.ts" .omc/plans/INDEX-codemap.md
-→ 1 grep call
-```
+**Reverse (code → doc):** `grep "file.ts" .omc/plans/INDEX-codemap.md`
 
-**L3 Fallback (when grep misses):**
-```
-python ~/.claude/skills/stmemory/rag.py query "recommend places near user location"
-→ Returns matching docs + code files via semantic search
-→ ~300 tokens
-```
-
-**Skill integration:**
-- `/fix` Phase 1 → replaced by `stmemory resolve`
-- `/ralph` start → scope confirmation via `stmemory resolve`
-- LSP → use resolved symbols for `lsp_goto_definition`
+**L3 Fallback:** `python ~/.claude/skills/doby/rag.py query "natural language search"`
 
 ---
 
 ### Mode 3: `lint` (Health Check)
 
-**Trigger:** `/stmemory lint`
+**Trigger:** `/doby lint`  
 **Model:** Haiku collect → Opus judge
 
-```
-Haiku parallel checks:
-  - Broken code links: do file paths in INDEX-codemap.md exist?
-  - Orphan docs: active docs with no code connection
-  - Missing mappings: major code files not in INDEX
-  - Symbol changes: renamed/deleted symbols (LSP verification)
-
-Opus judgment:
-  - Generate fix suggestion list
-  - Apply after user approval
-```
+Haiku checks: broken code links, orphan docs, missing mappings, symbol changes.  
+Opus generates fix suggestions.
 
 ---
 
 ### Mode 4: `update` (Incremental Update)
 
-**Trigger:** `/stmemory update` or auto-suggested when pending file exists
-**Model:** Plan doc change → Haiku rescan + Opus line replace. Code change → Opus direct.
-**Principle:** 0 Read calls. grep -n to find line number → Edit that line only.
+**Trigger:** `/doby update` or auto-suggested when `doby-pending.txt` exists  
+**Model:** Plan doc change → Haiku rescan; code change → Opus direct
 
-```
-Step 1: Read pending file
-  cat .omc/state/stmemory-pending.txt
-  → "2026-04-23T15:30  plan  audio-playback.md"
-  → "2026-04-23T16:00  code  src/hooks/useAudio.ts"
-
-Step 2-A: Plan doc changed
-  Agent(model="haiku"): Read that doc only → re-extract keywords/code/symbols
-  grep -n "audio-playback.md" INDEX.md → line number N
-  Edit(INDEX.md, line N old, line N new)
-
-Step 2-B: Code changed
-  grep -n "useAudio.ts" INDEX-codemap.md → line number N
-  Opus: check symbol changes (LSP document_symbols, 1 call)
-  Edit(INDEX-codemap.md, line N old, line N new)
-
-Step 3: Append to INDEX-log.md
-Step 4: Delete pending file
-
-Total cost: grep 2-4 + Edit 2-4 + Haiku 0-1 = ~300 tokens
-```
+Reads pending file, updates changed entries only via `grep -n` + `Edit`.  
+Total cost: ~300 tokens.
 
 ---
 
 ### Mode 5: `compile` (Auto-Generate Wiki)
 
-**Trigger:** `/stmemory compile` or `/stmemory compile <doc_name>`
-**Model:** Opus direct (reads plan doc + code → generates wiki page)
+**Trigger:** `/doby compile` or `/doby compile <doc_name>`  
+**Model:** Opus direct
 
-```
-Step 1: Read plan doc + linked code files
-Step 2: Generate .omc/wiki/<topic>.md with:
-  - Architecture overview
-  - Design decisions and rationale
-  - Key constraints and trade-offs
-  - Related topics (cross-references)
-Step 3: Update INDEX.md with wiki pointer
+Reads plan doc + linked code files, generates `.omc/wiki/<topic>.md` with architecture, decisions, constraints, cross-references.  
+Cost: ~2,000 tokens per wiki page (manual trigger only).
 
-Cost: ~2,000 tokens per wiki page (manual trigger only)
+---
+
+### Mode 6: `fix` (Spec-First Fix Workflow)
+
+**Trigger:** `/doby fix`, `/fix`, or modification keyword detected  
+**When:** Feature add, bug fix, refactor, UI/API change  
+**Exception:** Config edits, doc-only edits, doby index tasks skip fix mode.
+
+#### Core Principle
 ```
+doby resolve → spec update → verification loop → implementation → doby sync + consistency check
+```
+
+Never modify code first. Always update spec docs first. Use doby resolve to minimize exploration.
+
+#### Phase 0: doby resolve (auto-run, report required)
+
+Extract keywords from request → invoke Mode 2 internally.
+
+**Report format:**
+```
+🔍 doby resolve: "keyword"
+📄 Docs: doc1.md, doc2.md
+📁 Code: file1.py#symbol1, file2.dart#symbol2
+🏷️ Domain: @domain (status)
+📏 Scale: small/medium/large
+```
+
+#### Phase 1: Spec Review
+Read only docs from Phase 0. Identify diff between current spec and request.
+
+#### Phase 2: Spec Update
+Apply changes to spec docs first. **User approval required.**
+
+#### Phase 3: Plan Verification Loop (repeat until consensus)
+Opus verifies 3 perspectives: feasibility, architecture, risk.  
+Report per round. Max 3 rounds before warning user.
+
+#### Phase 4: Implementation + Verification Loop (repeat until consensus)
+
+Scale-based branching:
+- Small (1-3 files): 1 Haiku Agent, sequential
+- Medium (4-10 files): 2-3 Haiku Agents parallel
+- Large (10+ files): 3-5 Haiku Agents parallel
+
+Opus verifies: spec-code consistency, code quality, project conventions.  
+Max 5 rounds before warning user.
+
+#### Phase 5: Integration Test
+Local API test → frontend check → deploy + production test.
+
+#### Phase 6: doby sync + Consistency Check
+Invoke Mode 4 (update). Verify spec-code consistency.
+
+**Final report:**
+```
+✅ Spec-code consistency: @domain
+📄 Spec: N changes applied
+📁 Code: file1.py#symbol1, file2.dart#symbol2
+🔄 doby: INDEX updated
+⚠️ Inconsistencies: (list or "none")
+📊 Distribution: Haiku N / Opus M
+🔎 Loops: plan N rounds, impl M rounds
+```
+
+#### Phase 7: Complete
+Mark spec as done. Append to INDEX-log.md.
+
+#### Fix Rules
+- Phase order strict: 0 → 1 → 2 → 3 → 4 → 5 → 6 → 7
+- Phase 0 (doby resolve) mandatory
+- Phase 3, 4 loops repeat until consensus — never single-pass
+- Phase 6 (doby sync) mandatory
+- No code before Phase 2 approval
+- No spec changes without user approval
+- Follow project conventions in CLAUDE.md or .dobyrc.json
+
+---
+
+### Mode 7: `status` (Quick Status)
+
+**Trigger:** `/doby status`  
+**Model:** Opus direct (grep only, ~50 tokens)
+
+Count domains, active docs, mapped code files, keywords. Report last update.
 
 ---
 
 ## Hook Integration
 
-### PostToolUse Hook (Write|Edit detection)
+**PostToolUse Hook (detect-change.mjs):** Zero-token change tracking — appends file path to `doby-pending.txt` when plan docs or tracked code files are modified.
 
-`detect-change.mjs` — zero-token change tracking:
-- Detects when plan docs or tracked code files are modified
-- Appends file path to `stmemory-pending.txt`
-- **0 LLM tokens** — shell script only
+**Stop Hook (batch-report.mjs):** Reports accumulated changes if pending file exists, suggests `/doby update`.
 
-### Stop Hook (Session end report)
-
-`batch-report.mjs` — reports accumulated changes:
-- Only fires if pending changes exist
-- Suggests `/stmemory update` for next session
-
-## Setup
-
-```bash
-cd your-project
-bash ~/.claude/skills/stmemory/install.sh
-```
-
-This will:
-1. Install chromadb (for L3 RAG)
-2. Create `.omc/plans/`, `.omc/wiki/`, `.omc/state/` directories
-3. Copy `.stmemoryrc.example.json` as starting config
-4. Print hook configuration instructions
-
-## Token Efficiency
-
-| Operation | Token Cost |
-|-----------|-----------|
-| **build** (once) | ~5,000-10,000 (Haiku executes, Opus judges) |
-| **resolve** (search) | ~100-200 (grep 2 calls, 0 Read) |
-| **update** (incremental) | ~300-500 (grep -n + Edit, changed files only) |
-| **lint** (health check) | ~1,000-2,000 (Haiku collect + Opus judge) |
-| **compile** (wiki gen) | ~2,000 per page (manual trigger) |
-| **L3 RAG query** | ~300 (on L1 miss only) |
-| **Change tracking** | **0** (hook appends filepath to .txt) |
+---
 
 ## Rules
 

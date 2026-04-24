@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Stop hook — reads stmemory-pending.txt and reports accumulated changes.
+ * Stop hook — reads doby-pending.txt and reports accumulated changes.
  * Only injects a reminder if there ARE pending changes. Zero cost otherwise.
  *
  * Auto-detects project root by walking up from cwd to find .omc/ directory.
@@ -36,7 +36,7 @@ if (!projectRoot) {
   process.exit(0);
 }
 
-const PENDING_FILE = join(projectRoot, ".omc/state/stmemory-pending.txt");
+const PENDING_FILE = join(projectRoot, ".omc/state/doby-pending.txt");
 
 if (!existsSync(PENDING_FILE)) {
   process.exit(0);
@@ -61,6 +61,6 @@ if (codes.length > 0) {
   );
 }
 
-const msg = `[stmemory] Files changed during session ${lines.length} — ${parts.join(" / ")}. Run /stmemory update in the next session.`;
+const msg = `[doby] Files changed during session ${lines.length} — ${parts.join(" / ")}. Run /doby update in the next session.`;
 
 process.stdout.write(JSON.stringify({ additionalContext: msg }));

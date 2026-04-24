@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * PostToolUse hook for stmemory — zero-token change tracking.
+ * PostToolUse hook for doby — zero-token change tracking.
  * Appends changed file paths to a pending list. No LLM involvement.
- * Batch-processed later by /stmemory update or Stop hook.
+ * Batch-processed later by /doby update or Stop hook.
  *
  * Auto-detects project root by walking up from file_path to find .omc/ directory.
  */
@@ -59,7 +59,7 @@ if (!projectRoot) {
 
 const PLANS_DIR = join(projectRoot, ".omc/plans");
 const STATE_DIR = join(projectRoot, ".omc/state");
-const PENDING_FILE = join(STATE_DIR, "stmemory-pending.txt");
+const PENDING_FILE = join(STATE_DIR, "doby-pending.txt");
 const CODEMAP_FILE = join(PLANS_DIR, "INDEX-codemap.md");
 
 const relPath = filePath.startsWith(projectRoot)

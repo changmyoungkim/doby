@@ -1,23 +1,23 @@
 #!/bin/bash
 
-# stmemory — Structured Memory for LLM-Driven Development
+# doby — Structured Memory for LLM-Driven Development
 
 set -e
 
 echo ""
 echo "╔════════════════════════════════════════════════════════════════╗"
-echo "║  stmemory — Structured Memory for LLM-Driven Development     ║"
+echo "║  doby — Structured Memory for LLM-Driven Development         ║"
 echo "╚════════════════════════════════════════════════════════════════╝"
 echo ""
 
-# Check if stmemory directory exists
-STMEMORY_DIR="$HOME/.claude/skills/stmemory"
-if [ ! -d "$STMEMORY_DIR" ]; then
-  echo "ERROR: stmemory directory not found at $STMEMORY_DIR"
+# Check if doby directory exists
+DOBY_DIR="$HOME/.claude/skills/doby"
+if [ ! -d "$DOBY_DIR" ]; then
+  echo "ERROR: doby directory not found at $DOBY_DIR"
   exit 1
 fi
 
-echo "✓ Found stmemory directory at $STMEMORY_DIR"
+echo "✓ Found doby directory at $DOBY_DIR"
 echo ""
 
 # Install chromadb
@@ -49,16 +49,16 @@ mkdir -p "$PROJECT_ROOT/.omc/state"
 echo "✓ Created .omc directories in $PROJECT_ROOT"
 echo ""
 
-# Copy .stmemoryrc.example.json to .stmemoryrc.json if it doesn't exist
-if [ -f "$STMEMORY_DIR/.stmemoryrc.example.json" ]; then
-  if [ ! -f "$PROJECT_ROOT/.stmemoryrc.json" ]; then
-    cp "$STMEMORY_DIR/.stmemoryrc.example.json" "$PROJECT_ROOT/.stmemoryrc.json"
-    echo "✓ Copied .stmemoryrc.example.json to .stmemoryrc.json"
+# Copy .dobyrc.example.json to .dobyrc.json if it doesn't exist
+if [ -f "$DOBY_DIR/.dobyrc.example.json" ]; then
+  if [ ! -f "$PROJECT_ROOT/.dobyrc.json" ]; then
+    cp "$DOBY_DIR/.dobyrc.example.json" "$PROJECT_ROOT/.dobyrc.json"
+    echo "✓ Copied .dobyrc.example.json to .dobyrc.json"
   else
-    echo "✓ .stmemoryrc.json already exists"
+    echo "✓ .dobyrc.json already exists"
   fi
 else
-  echo "⚠ .stmemoryrc.example.json not found"
+  echo "⚠ .dobyrc.example.json not found"
 fi
 echo ""
 
@@ -72,11 +72,11 @@ echo ""
 echo '  "hooks": {'
 echo '    "PostToolUse": [{'
 echo '      "matcher": "Write|Edit",'
-echo '      "hooks": [{"type": "command", "command": "node ~/.claude/skills/stmemory/detect-change.mjs"}]'
+echo '      "hooks": [{"type": "command", "command": "node ~/.claude/skills/doby/detect-change.mjs"}]'
 echo '    }],'
 echo '    "Stop": [{'
 echo '      "matcher": "",'
-echo '      "hooks": [{"type": "command", "command": "node ~/.claude/skills/stmemory/batch-report.mjs"}]'
+echo '      "hooks": [{"type": "command", "command": "node ~/.claude/skills/doby/batch-report.mjs"}]'
 echo '    }]'
 echo '  }'
 echo ""
@@ -89,8 +89,8 @@ echo "╔═══════════════════════�
 echo "║                    Setup Complete!                            ║"
 echo "╚════════════════════════════════════════════════════════════════╝"
 echo ""
-echo "To use stmemory:"
+echo "To use doby:"
 echo "  1. cd to your project root"
-echo "  2. python ~/.claude/skills/stmemory/rag.py index"
-echo "  3. python ~/.claude/skills/stmemory/rag.py query \"your question\""
+echo "  2. python ~/.claude/skills/doby/rag.py index"
+echo "  3. python ~/.claude/skills/doby/rag.py query \"your question\""
 echo ""

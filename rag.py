@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-stmemory RAG — Lightweight ChromaDB-based semantic search module.
+doby RAG — Lightweight ChromaDB-based semantic search module.
 
 Provides semantic search over project plans, code, and documentation
 using persistent ChromaDB storage.
@@ -19,7 +19,7 @@ except ImportError:
     sys.exit(1)
 
 
-class StmemoryRAG:
+class DobyRAG:
     """Semantic search over project plans and code using ChromaDB."""
 
     def __init__(self, project_root: str) -> None:
@@ -30,18 +30,16 @@ class StmemoryRAG:
             project_root: Project root directory path
         """
         self.project_root = Path(project_root)
-        self.db_path = self.project_root / ".omc" / "state" / "stmemory-rag"
+        self.db_path = self.project_root / ".omc" / "state" / "doby-rag"
         self.db_path.mkdir(parents=True, exist_ok=True)
 
         # Initialize ChromaDB with persistent storage
-        settings = Settings(
-            chroma_db_impl="duckdb+parquet",
-            persist_directory=str(self.db_path),
-            anonymized_telemetry=False,
+        self.client = chromadb.PersistentClient(
+            path=str(self.db_path),
+            settings=Settings(anonymized_telemetry=False),
         )
-        self.client = chromadb.Client(settings)
         self.collection = self.client.get_or_create_collection(
-            name="stmemory",
+            name="doby",
             metadata={"hnsw:space": "cosine"}
         )
 
@@ -93,8 +91,8 @@ class StmemoryRAG:
         """
         Index code files referenced in INDEX-codemap.md.
 
-        Reads codemap file, extracts file paths, reads first 100 lines
-        of each, and stores in ChromaDB.
+        Reads codemap file in format: filepath:@domain#symbol1,symbol2
+        Extracts file paths, reads first 100 lines of each, and stores in ChromaDB.
 
         Args:
             codemap_path: Path to INDEX-codemap.md file
@@ -106,20 +104,20 @@ class StmemoryRAG:
 
         try:
             content = codemap_file.read_text(encoding="utf-8")
-            # Simple extraction of file paths (lines that look like file paths)
             lines = content.split("\n")
             file_paths = []
 
             for line in lines:
                 line = line.strip()
-                # Look for lines that might be file paths
-                if line.startswith("/") or line.startswith("./") or ".py" in line or ".ts" in line or ".tsx" in line:
-                    # Extract potential file path
-                    parts = line.split(maxsplit=1)
-                    if parts:
-                        potential_path = parts[0].strip("- []():`")
-                        if Path(potential_path).suffix in [".py", ".ts", ".tsx", ".js", ".jsx"]:
-                            file_paths.append(potential_path)
+                if not line:
+                    continue
+
+                # Parse format: filepath:@domain#symbol1,symbol2
+                # Extract filepath (everything before the first colon)
+                if ":" in line:
+                    filepath = line.split(":", 1)[0].strip()
+                    if filepath:
+                        file_paths.append(filepath)
 
             if not file_paths:
                 print(f"WARNING: No code file paths found in {codemap_path}")
@@ -198,9 +196,9 @@ class StmemoryRAG:
     def rebuild(self) -> None:
         """Clear collection and re-index everything."""
         try:
-            self.client.delete_collection(name="stmemory")
+            self.client.delete_collection(name="doby")
             self.collection = self.client.get_or_create_collection(
-                name="stmemory",
+                name="doby",
                 metadata={"hnsw:space": "cosine"}
             )
             print("Collection cleared. Ready to re-index.")
@@ -237,7 +235,7 @@ class StmemoryRAG:
 
 
 def main() -> None:
-    """CLI interface for stmemory RAG."""
+    """CLI interface for doby RAG."""
     if len(sys.argv) < 2:
         print("Usage: python rag.py <command> [args]")
         print("")
@@ -250,7 +248,7 @@ def main() -> None:
     command = sys.argv[1]
     project_root = os.getcwd()
 
-    rag = StmemoryRAG(project_root)
+    rag = DobyRAG(project_root)
 
     if command == "index":
         plans_dir = Path(project_root) / ".omc" / "plans"
