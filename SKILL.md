@@ -111,8 +111,9 @@ L4: Auto-Compile (LLM)        — 2,000 tokens  — manual trigger only
 
 | Role | Model | Work |
 |------|-------|------|
-| Supervise / classify / judge | **Opus** (direct) | Domain classification, status judgment, quality check |
-| Collect / scan / extract | **Haiku** (Agent) | Doc scan, keyword extraction, code path verification |
+| Phase 1-2: Code→Doc extraction | **Python scripts** (0 tokens) | AST parse, heuristic mapping — MUST run before any LLM work |
+| Phase 3,6: Supervise / classify / judge | **Opus** (direct) | Domain classification, status judgment, quality check |
+| Phase 4: Keyword + symbol collection | **Haiku** (Agent) | Doc scan, keyword extraction, code path verification |
 
 ## 7 Modes
 
@@ -121,21 +122,46 @@ L4: Auto-Compile (LLM)        — 2,000 tokens  — manual trigger only
 **Trigger:** `/doby build` or `/doby`  
 **When:** First run, or indexes missing/outdated
 
+> **BLOCKING RULE:** Phase 1-2 (Python scripts) MUST complete before ANY LLM work (Phase 3+).
+> Haiku Agents are NOT a substitute for the Python scripts. The scripts do deterministic AST/regex
+> extraction at 0 tokens. Agents are only for Phase 4 (keyword + symbol enrichment after indexes exist).
+> If you skip Phase 1-2 and jump to agents, you are violating this skill.
+
+**Phase 0:** Ensure `.dobyrc.json` exists in project root.
+If missing, create it by inspecting the project structure. Required keys:
+```json
+{
+  "scan_dirs": ["packages/api", "packages/frontend/src", "packages/backend/src", ...],
+  "file_extensions": [".py", ".tsx", ".ts", ".dart"],
+  "plans_dir": ".omc/plans",
+  "wiki_dir": ".omc/wiki",
+  "docs_dir": "idea-digger/output",
+  "keyword_to_doc": { "auth": "b5-7-auth-infra", "curriculum": "v2-master-spec", ... },
+  "directory_rules": { "packages/api/app/routers": "v2-master-spec", ... },
+  "exact_file_map": { "packages/api/app/routers/user.py": "b5-7-auth-infra", ... }
+}
+```
+Populate `keyword_to_doc`, `directory_rules`, `exact_file_map` based on existing docs in `docs_dir`.
+This is Opus direct work (config creation, not code execution).
+
 **Phase 1:** Auto-generate spec docs from code (0 LLM tokens):
 ```bash
 python ~/.claude/skills/doby/docgen.py --config .dobyrc.json --apply
 ```
 Extracts FastAPI endpoints, Dart widgets, function signatures, imports via AST/regex. Generates one `.md` per domain. Skips domains that already have docs (use `--force` to overwrite).
+**STOP if this fails.** Fix the config or script error before proceeding.
 
 **Phase 2:** Auto-map code files to docs (0 LLM tokens):
 ```bash
 python ~/.claude/skills/doby/automap.py --config .dobyrc.json --apply
 ```
 4-tier heuristic (exact → directory → keyword → fuzzy) writes INDEX-codemap.md + INDEX.md.
+**STOP if this fails.** Fix before proceeding.
 
 **Phase 3:** Opus verifies mappings, judges status (active/archived/orphan/planning), normalizes keywords.
 
 **Phase 4:** Haiku x2 parallel — extract keywords from docs, collect code symbols via LSP.
+> This is the ONLY phase where Haiku Agents do collection work. Phase 1-2 are Python-only.
 
 **Phase 5:** Optional L3 RAG index via `python ~/.claude/skills/doby/rag.py index`
 
@@ -298,4 +324,7 @@ Count domains, active docs, mapped code files, keywords. Report last update.
 - Build results must be reported to user before saving
 - Lint auto-fix forbidden — user approval required
 - All INDEX changes logged in INDEX-log.md
-- Haiku collects, Opus judges — no role mixing
+- Haiku collects (Phase 4 only), Opus judges — no role mixing
+- **Build phase order is STRICT:** Phase 0 (config) → 1 (docgen.py) → 2 (automap.py) → 3 (Opus verify) → 4 (Haiku enrich) → 5 (RAG) → 6 (final INDEX). NEVER skip Phase 0-2.
+- **Python scripts are NOT optional.** If `.dobyrc.json` is missing, create it first (Phase 0). If scripts fail, fix the error. Do NOT substitute with LLM agents — that defeats the 0-token design.
+- **Haiku Agents are Phase 4 only.** They enrich existing indexes with keywords/symbols AFTER Python scripts have generated the base indexes. Using agents for Phase 1-2 work wastes tokens and violates the skill.
